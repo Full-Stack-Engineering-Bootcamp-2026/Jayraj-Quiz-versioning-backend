@@ -1,0 +1,18 @@
+package com.quizapp.quiz_versioning_system.security.jwt;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Configuration
+@ConfigurationProperties(prefix = "jwt")
+public class JwtConfig {
+
+    private String secret;
+
+    private long expiration;
+}
