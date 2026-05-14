@@ -39,12 +39,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
             try {
 
-                JWTClaimsSet claims = jwtUtil.validateToken(token);
-
-                String email = claims.getSubject();
+                JWTClaimsSet claims =
+                        jwtUtil.validateToken(token);
 
                 List<String> permissions =
-                        (List<String>) claims.getClaim("permissions");
+                        (List<String>) claims.getClaim(
+                                "permissions");
 
                 List<SimpleGrantedAuthority> authorities =
                         permissions.stream()
@@ -53,7 +53,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                email,
+                                claims,
                                 null,
                                 authorities);
 
