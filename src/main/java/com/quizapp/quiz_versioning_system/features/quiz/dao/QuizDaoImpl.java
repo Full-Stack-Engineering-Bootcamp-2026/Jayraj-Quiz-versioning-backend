@@ -1,4 +1,4 @@
-package com.quizapp.quiz_versioning_system.features.question.dao;
+package com.quizapp.quiz_versioning_system.features.quiz.dao;
 
 import java.util.List;
 import java.util.UUID;
@@ -8,11 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.quizapp.quiz_versioning_system.common.exception.ResourceNotFoundException;
 import com.quizapp.quiz_versioning_system.features.question.entity.Question;
-import com.quizapp.quiz_versioning_system.features.question.entity.QuestionOption;
 import com.quizapp.quiz_versioning_system.features.question.entity.QuestionVersion;
-import com.quizapp.quiz_versioning_system.features.question.repository.QuestionOptionRepository;
 import com.quizapp.quiz_versioning_system.features.question.repository.QuestionRepository;
 import com.quizapp.quiz_versioning_system.features.question.repository.QuestionVersionRepository;
+import com.quizapp.quiz_versioning_system.features.quiz.entity.Quiz;
+import com.quizapp.quiz_versioning_system.features.quiz.entity.QuizQuestion;
+import com.quizapp.quiz_versioning_system.features.quiz.repository.QuizQuestionRepository;
+import com.quizapp.quiz_versioning_system.features.quiz.repository.QuizRepository;
 import com.quizapp.quiz_versioning_system.features.user.entity.User;
 import com.quizapp.quiz_versioning_system.features.user.repository.UserRepository;
 
@@ -20,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class QuestionDaoImpl implements QuestionDao {
+public class QuizDaoImpl implements QuizDao {
 
         private final UserRepository userRepository;
 
@@ -28,7 +30,9 @@ public class QuestionDaoImpl implements QuestionDao {
 
         private final QuestionVersionRepository questionVersionRepository;
 
-        private final QuestionOptionRepository questionOptionRepository;
+        private final QuizRepository quizRepository;
+
+        private final QuizQuestionRepository quizQuestionRepository;
 
         @Override
         public User getUserByUuid(UUID userUuid) {
@@ -39,33 +43,10 @@ public class QuestionDaoImpl implements QuestionDao {
         }
 
         @Override
-        @Transactional
-        public Question saveQuestion(Question question) {
-
-                return questionRepository.save(question);
-        }
-
-        @Override
-        @Transactional
-        public QuestionVersion saveQuestionVersion(
-                        QuestionVersion questionVersion) {
-
-                return questionVersionRepository
-                                .save(questionVersion);
-        }
-
-        @Override
-        @Transactional
-        public List<QuestionOption> saveQuestionOptions(
-                        List<QuestionOption> options) {
-
-                return questionOptionRepository.saveAll(options);
-        }
-
-        @Override
         public Question getQuestionByUuid(UUID questionUuid) {
 
-                return questionRepository.findByUuid(questionUuid)
+                return questionRepository.findByUuid(
+                                questionUuid)
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Question not found"));
         }
@@ -82,20 +63,44 @@ public class QuestionDaoImpl implements QuestionDao {
         }
 
         @Override
-        public List<Question> getAllQuestions() {
+        @Transactional
+        public Quiz saveQuiz(Quiz quiz) {
 
-                return questionRepository.findAll()
+                return quizRepository.save(quiz);
+        }
+
+        @Override
+        @Transactional
+        public List<QuizQuestion> saveQuizQuestions(
+                        List<QuizQuestion> quizQuestions) {
+
+                return quizQuestionRepository
+                                .saveAll(quizQuestions);
+        }
+
+        @Override
+        public List<Quiz> getAllQuizzes() {
+
+                return quizRepository.findAll()
                                 .stream()
-                                .filter(question -> !question.getIsDeleted())
+                                .filter(Quiz::getIsActive)
                                 .toList();
         }
 
         @Override
-        public QuestionVersion getLatestQuestionVersionByQuestionUuid(
-                        UUID questionUuid) {
+        public Quiz getQuizByUuid(UUID quizUuid) {
 
-                Question question = getQuestionByUuid(questionUuid);
+                return quizRepository.findByUuid(quizUuid)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Quiz not found"));
+        }
 
-                return getLatestQuestionVersion(question);
+        @Override
+        public List<QuizQuestion> getQuizQuestions(
+                        Quiz quiz) {
+
+                return quizQuestionRepository
+                                .findByQuizOrderByDisplayOrder(
+                                                quiz);
         }
 }

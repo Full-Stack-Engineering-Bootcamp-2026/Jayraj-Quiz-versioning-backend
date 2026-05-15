@@ -13,6 +13,7 @@ import com.quizapp.quiz_versioning_system.security.util.SecurityUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -20,57 +21,79 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class QuestionController {
 
-    private final QuestionService questionService;
+        private final QuestionService questionService;
 
-    private final SecurityUtil securityUtil;
+        private final SecurityUtil securityUtil;
 
-    @PreAuthorize("hasAuthority('QUESTION_CREATE')")
-    @PostMapping
-    public ResponseEntity<ApiResponse<QuestionResponse>>
-    createQuestion(
-            @Valid @RequestBody
-            CreateQuestionRequest request) {
+        @PreAuthorize("hasAuthority('QUESTION_CREATE')")
+        @PostMapping
+        public ResponseEntity<ApiResponse<QuestionResponse>> createQuestion(
+                        @Valid @RequestBody CreateQuestionRequest request) {
 
-        UUID userUuid =
-                securityUtil.getCurrentUserUuid();
+                UUID userUuid = securityUtil.getCurrentUserUuid();
 
-        QuestionResponse response =
-                questionService.createQuestion(
-                        request,
-                        userUuid);
+                QuestionResponse response = questionService.createQuestion(
+                                request,
+                                userUuid);
 
-        return ResponseEntity.ok(
-                ApiResponse.<QuestionResponse>builder()
-                        .success(true)
-                        .message(
-                                "Question created successfully")
-                        .data(response)
-                        .build());
-    }
+                return ResponseEntity.ok(
+                                ApiResponse.<QuestionResponse>builder()
+                                                .success(true)
+                                                .message(
+                                                                "Question created successfully")
+                                                .data(response)
+                                                .build());
+        }
 
-    @PreAuthorize("hasAuthority('QUESTION_EDIT')")
-    @PutMapping("/{questionUuid}")
-    public ResponseEntity<ApiResponse<QuestionResponse>>
-    editQuestion(
-            @PathVariable UUID questionUuid,
-            @Valid @RequestBody
-            CreateQuestionRequest request) {
+        @PreAuthorize("hasAuthority('QUESTION_EDIT')")
+        @PutMapping("/{questionUuid}")
+        public ResponseEntity<ApiResponse<QuestionResponse>> editQuestion(
+                        @PathVariable UUID questionUuid,
+                        @Valid @RequestBody CreateQuestionRequest request) {
 
-        UUID userUuid =
-                securityUtil.getCurrentUserUuid();
+                UUID userUuid = securityUtil.getCurrentUserUuid();
 
-        QuestionResponse response =
-                questionService.editQuestion(
-                        questionUuid,
-                        request,
-                        userUuid);
+                QuestionResponse response = questionService.editQuestion(
+                                questionUuid,
+                                request,
+                                userUuid);
 
-        return ResponseEntity.ok(
-                ApiResponse.<QuestionResponse>builder()
-                        .success(true)
-                        .message(
-                                "Question version created successfully")
-                        .data(response)
-                        .build());
-    }
+                return ResponseEntity.ok(
+                                ApiResponse.<QuestionResponse>builder()
+                                                .success(true)
+                                                .message(
+                                                                "Question version created successfully")
+                                                .data(response)
+                                                .build());
+        }
+
+        @PreAuthorize("hasAuthority('QUIZ_CREATE')")
+        @GetMapping
+        public ResponseEntity<ApiResponse<List<QuestionResponse>>> getAllQuestions() {
+
+                List<QuestionResponse> response = questionService.getAllQuestions();
+
+                return ResponseEntity.ok(
+                                ApiResponse.<List<QuestionResponse>>builder()
+                                                .success(true)
+                                                .message("Questions fetched successfully")
+                                                .data(response)
+                                                .build());
+        }
+
+        @PreAuthorize("hasAuthority('QUIZ_CREATE')")
+        @GetMapping("/{questionUuid}")
+        public ResponseEntity<ApiResponse<QuestionResponse>> getQuestionByUuid(
+                        @PathVariable UUID questionUuid) {
+
+                QuestionResponse response = questionService.getQuestionByUuid(
+                                questionUuid);
+
+                return ResponseEntity.ok(
+                                ApiResponse.<QuestionResponse>builder()
+                                                .success(true)
+                                                .message("Question fetched successfully")
+                                                .data(response)
+                                                .build());
+        }
 }

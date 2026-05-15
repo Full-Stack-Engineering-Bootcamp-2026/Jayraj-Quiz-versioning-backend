@@ -15,6 +15,7 @@ import com.quizapp.quiz_versioning_system.features.question.entity.Question;
 import com.quizapp.quiz_versioning_system.features.question.entity.QuestionOption;
 import com.quizapp.quiz_versioning_system.features.question.entity.QuestionVersion;
 import com.quizapp.quiz_versioning_system.features.question.enums.QuestionType;
+import com.quizapp.quiz_versioning_system.features.question.repository.QuestionOptionRepository;
 import com.quizapp.quiz_versioning_system.features.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
@@ -23,178 +24,225 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class QuestionServiceImpl implements QuestionService {
 
-    private final QuestionDao questionDao;
+        private final QuestionDao questionDao;
 
-    @Override
-    public QuestionResponse createQuestion(
-            CreateQuestionRequest request,
-            UUID userUuid) {
+        private final QuestionOptionRepository questionOptionRepository;
 
-        validateQuestionRequest(request);
+        @Override
+        public QuestionResponse createQuestion(
+                        CreateQuestionRequest request,
+                        UUID userUuid) {
 
-        User user = questionDao.getUserByUuid(userUuid);
+                validateQuestionRequest(request);
 
-        Question question = new Question();
+                User user = questionDao.getUserByUuid(userUuid);
 
-        question.setCreatedBy(user);
+                Question question = new Question();
 
-        Question savedQuestion = questionDao.saveQuestion(question);
+                question.setCreatedBy(user);
 
-        QuestionVersion questionVersion = new QuestionVersion();
+                Question savedQuestion = questionDao.saveQuestion(question);
 
-        questionVersion.setQuestion(savedQuestion);
+                QuestionVersion questionVersion = new QuestionVersion();
 
-        questionVersion.setVersionNumber(1);
+                questionVersion.setQuestion(savedQuestion);
 
-        questionVersion.setQuestionText(
-                request.getQuestionText());
+                questionVersion.setVersionNumber(1);
 
-        questionVersion.setQuestionType(
-                request.getQuestionType());
+                questionVersion.setQuestionText(
+                                request.getQuestionText());
 
-        questionVersion.setCreatedBy(user);
+                questionVersion.setQuestionType(
+                                request.getQuestionType());
 
-        QuestionVersion savedVersion = questionDao.saveQuestionVersion(
-                questionVersion);
+                questionVersion.setCreatedBy(user);
 
-        List<QuestionOption> savedOptions = saveQuestionOptions(
-                request.getOptions(),
-                savedVersion);
+                QuestionVersion savedVersion = questionDao.saveQuestionVersion(
+                                questionVersion);
 
-        return buildQuestionResponse(
-                savedQuestion,
-                savedVersion,
-                savedOptions);
-    }
+                List<QuestionOption> savedOptions = saveQuestionOptions(
+                                request.getOptions(),
+                                savedVersion);
 
-    @Override
-    public QuestionResponse editQuestion(
-            UUID questionUuid,
-            CreateQuestionRequest request,
-            UUID userUuid) {
-
-        validateQuestionRequest(request);
-
-        User user = questionDao.getUserByUuid(userUuid);
-
-        Question question = questionDao.getQuestionByUuid(
-                questionUuid);
-
-        QuestionVersion latestVersion = questionDao.getLatestQuestionVersion(
-                question);
-
-        Integer nextVersionNumber = latestVersion.getVersionNumber() + 1;
-
-        QuestionVersion newVersion = new QuestionVersion();
-
-        newVersion.setQuestion(question);
-
-        newVersion.setVersionNumber(
-                nextVersionNumber);
-
-        newVersion.setQuestionText(
-                request.getQuestionText());
-
-        newVersion.setQuestionType(
-                request.getQuestionType());
-
-        newVersion.setCreatedBy(user);
-
-        QuestionVersion savedVersion = questionDao.saveQuestionVersion(
-                newVersion);
-
-        List<QuestionOption> savedOptions = saveQuestionOptions(
-                request.getOptions(),
-                savedVersion);
-
-        return buildQuestionResponse(
-                question,
-                savedVersion,
-                savedOptions);
-    }
-
-    private void validateQuestionRequest(
-            CreateQuestionRequest request) {
-
-        if (request.getQuestionType() == QuestionType.TEXT) {
-
-            return;
+                return buildQuestionResponse(
+                                savedQuestion,
+                                savedVersion,
+                                savedOptions);
         }
 
-        if (request.getOptions() == null
-                || request.getOptions().isEmpty()) {
+        @Override
+        public QuestionResponse editQuestion(
+                        UUID questionUuid,
+                        CreateQuestionRequest request,
+                        UUID userUuid) {
 
-            throw new BadRequestException(
-                    "Options are required for objective questions");
+                validateQuestionRequest(request);
+
+                User user = questionDao.getUserByUuid(userUuid);
+
+                Question question = questionDao.getQuestionByUuid(
+                                questionUuid);
+
+                QuestionVersion latestVersion = questionDao.getLatestQuestionVersion(
+                                question);
+
+                Integer nextVersionNumber = latestVersion.getVersionNumber() + 1;
+
+                QuestionVersion newVersion = new QuestionVersion();
+
+                newVersion.setQuestion(question);
+
+                newVersion.setVersionNumber(
+                                nextVersionNumber);
+
+                newVersion.setQuestionText(
+                                request.getQuestionText());
+
+                newVersion.setQuestionType(
+                                request.getQuestionType());
+
+                newVersion.setCreatedBy(user);
+
+                QuestionVersion savedVersion = questionDao.saveQuestionVersion(
+                                newVersion);
+
+                List<QuestionOption> savedOptions = saveQuestionOptions(
+                                request.getOptions(),
+                                savedVersion);
+
+                return buildQuestionResponse(
+                                question,
+                                savedVersion,
+                                savedOptions);
         }
-    }
 
-    private List<QuestionOption> saveQuestionOptions(
-            List<QuestionOptionRequest> optionRequests,
-            QuestionVersion questionVersion) {
+        private void validateQuestionRequest(
+                        CreateQuestionRequest request) {
 
-        if (optionRequests == null
-                || optionRequests.isEmpty()) {
+                if (request.getQuestionType() == QuestionType.TEXT) {
 
-            return List.of();
+                        return;
+                }
+
+                if (request.getOptions() == null
+                                || request.getOptions().isEmpty()) {
+
+                        throw new BadRequestException(
+                                        "Options are required for objective questions");
+                }
         }
 
-        List<QuestionOption> options = optionRequests.stream()
-                .map(optionRequest -> {
+        private List<QuestionOption> saveQuestionOptions(
+                        List<QuestionOptionRequest> optionRequests,
+                        QuestionVersion questionVersion) {
 
-                    QuestionOption option = new QuestionOption();
+                if (optionRequests == null
+                                || optionRequests.isEmpty()) {
 
-                    option.setQuestionVersion(
-                            questionVersion);
+                        return List.of();
+                }
 
-                    option.setOptionText(
-                            optionRequest.getOptionText());
+                List<QuestionOption> options = optionRequests.stream()
+                                .map(optionRequest -> {
 
-                    option.setDisplayOrder(
-                            optionRequest.getDisplayOrder());
+                                        QuestionOption option = new QuestionOption();
 
-                    return option;
+                                        option.setQuestionVersion(
+                                                        questionVersion);
 
-                }).toList();
+                                        option.setOptionText(
+                                                        optionRequest.getOptionText());
 
-        return questionDao.saveQuestionOptions(
-                options);
-    }
+                                        option.setDisplayOrder(
+                                                        optionRequest.getDisplayOrder());
 
-    private QuestionResponse buildQuestionResponse(
-            Question question,
-            QuestionVersion questionVersion,
-            List<QuestionOption> options) {
+                                        return option;
 
-        return QuestionResponse.builder()
+                                }).toList();
 
-                .questionUuid(question.getUuid())
+                return questionDao.saveQuestionOptions(
+                                options);
+        }
 
-                .questionVersionUuid(
-                        questionVersion.getUuid())
+        private QuestionResponse buildQuestionResponse(
+                        Question question,
+                        QuestionVersion questionVersion,
+                        List<QuestionOption> options) {
 
-                .versionNumber(
-                        questionVersion.getVersionNumber())
+                return QuestionResponse.builder()
 
-                .questionText(
-                        questionVersion.getQuestionText())
+                                .questionUuid(question.getUuid())
 
-                .questionType(
-                        questionVersion.getQuestionType())
+                                .questionVersionUuid(
+                                                questionVersion.getUuid())
 
-                .options(
-                        options.stream()
-                                .map(option -> QuestionOptionResponse
-                                        .builder()
-                                        .optionUuid(
-                                                option.getUuid())
-                                        .optionText(
-                                                option.getOptionText())
-                                        .displayOrder(
-                                                option.getDisplayOrder())
-                                        .build())
-                                .toList())
+                                .versionNumber(
+                                                questionVersion.getVersionNumber())
 
-                .build();
-    }
+                                .questionText(
+                                                questionVersion.getQuestionText())
+
+                                .questionType(
+                                                questionVersion.getQuestionType())
+
+                                .options(
+                                                options.stream()
+                                                                .map(option -> QuestionOptionResponse
+                                                                                .builder()
+                                                                                .optionUuid(
+                                                                                                option.getUuid())
+                                                                                .optionText(
+                                                                                                option.getOptionText())
+                                                                                .displayOrder(
+                                                                                                option.getDisplayOrder())
+                                                                                .build())
+                                                                .toList())
+
+                                .build();
+        }
+
+        @Override
+        public List<QuestionResponse> getAllQuestions() {
+
+                List<Question> questions = questionDao.getAllQuestions();
+
+                return questions.stream()
+                                .map(question -> {
+
+                                        QuestionVersion latestVersion = questionDao
+                                                        .getLatestQuestionVersion(
+                                                                        question);
+
+                                        List<QuestionOption> options = questionOptionRepository
+                                                        .findByQuestionVersionOrderByDisplayOrder(
+                                                                        latestVersion);
+
+                                        return buildQuestionResponse(
+                                                        question,
+                                                        latestVersion,
+                                                        options);
+
+                                }).toList();
+        }
+
+        @Override
+        public QuestionResponse getQuestionByUuid(
+                        UUID questionUuid) {
+
+                Question question = questionDao.getQuestionByUuid(
+                                questionUuid);
+
+                QuestionVersion latestVersion = questionDao
+                                .getLatestQuestionVersionByQuestionUuid(
+                                                questionUuid);
+
+                List<QuestionOption> options = questionOptionRepository
+                                .findByQuestionVersionOrderByDisplayOrder(
+                                                latestVersion);
+
+                return buildQuestionResponse(
+                                question,
+                                latestVersion,
+                                options);
+        }
 }
