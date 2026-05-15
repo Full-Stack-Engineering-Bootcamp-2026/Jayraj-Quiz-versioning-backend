@@ -11,15 +11,22 @@ import com.quizapp.quiz_versioning_system.features.user.entity.User;
 
 public interface QuizDao {
 
-    User getUserByUuid(UUID userUuid);
+        User getUserByUuid(UUID userUuid);
 
-    Question getQuestionByUuid(UUID questionUuid);
+        Question getQuestionByUuid(UUID questionUuid);
 
-    QuestionVersion getLatestQuestionVersion(
-            Question question);
+        QuestionVersion getLatestQuestionVersion(
+                        Question question);
 
-    Quiz saveQuiz(Quiz quiz);
+        Quiz saveQuiz(Quiz quiz);
 
-    List<QuizQuestion> saveQuizQuestions(
-            List<QuizQuestion> quizQuestions);
+        List<QuizQuestion> saveQuizQuestions(
+                        List<QuizQuestion> quizQuestions);
+
+        List<Quiz> getAllQuizzes();
+
+        Quiz getQuizByUuid(UUID quizUuid);
+
+        List<QuizQuestion> getQuizQuestions(
+                        Quiz quiz);
 }

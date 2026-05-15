@@ -22,102 +22,141 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class QuizServiceImpl implements QuizService {
 
-    private final QuizDao quizDao;
+        private final QuizDao quizDao;
 
-    @Override
-    public QuizResponse createQuiz(
-            CreateQuizRequest request,
-            UUID userUuid) {
+        @Override
+        public QuizResponse createQuiz(
+                        CreateQuizRequest request,
+                        UUID userUuid) {
 
-        User user = quizDao.getUserByUuid(userUuid);
+                User user = quizDao.getUserByUuid(userUuid);
 
-        Quiz quiz = new Quiz();
+                Quiz quiz = new Quiz();
 
-        quiz.setTitle(request.getTitle());
+                quiz.setTitle(request.getTitle());
 
-        quiz.setCreatedBy(user);
+                quiz.setCreatedBy(user);
 
-        Quiz savedQuiz = quizDao.saveQuiz(quiz);
+                Quiz savedQuiz = quizDao.saveQuiz(quiz);
 
-        List<QuizQuestion> quizQuestions = request.getQuestions()
-                .stream()
-                .map(questionRequest -> buildQuizQuestion(
-                        questionRequest,
-                        savedQuiz))
-                .toList();
+                List<QuizQuestion> quizQuestions = request.getQuestions()
+                                .stream()
+                                .map(questionRequest -> buildQuizQuestion(
+                                                questionRequest,
+                                                savedQuiz))
+                                .toList();
 
-        List<QuizQuestion> savedQuizQuestions = quizDao.saveQuizQuestions(
-                quizQuestions);
+                List<QuizQuestion> savedQuizQuestions = quizDao.saveQuizQuestions(
+                                quizQuestions);
 
-        return buildQuizResponse(
-                savedQuiz,
-                savedQuizQuestions);
-    }
+                return buildQuizResponse(
+                                savedQuiz,
+                                savedQuizQuestions);
+        }
 
-    private QuizQuestion buildQuizQuestion(
-            QuizQuestionRequest request,
-            Quiz quiz) {
+        private QuizQuestion buildQuizQuestion(
+                        QuizQuestionRequest request,
+                        Quiz quiz) {
 
-        Question question = quizDao.getQuestionByUuid(
-                request.getQuestionUuid());
+                Question question = quizDao.getQuestionByUuid(
+                                request.getQuestionUuid());
 
-        QuestionVersion latestVersion = quizDao.getLatestQuestionVersion(
-                question);
+                QuestionVersion latestVersion = quizDao.getLatestQuestionVersion(
+                                question);
 
-        QuizQuestion quizQuestion = new QuizQuestion();
+                QuizQuestion quizQuestion = new QuizQuestion();
 
-        quizQuestion.setQuiz(quiz);
+                quizQuestion.setQuiz(quiz);
 
-        quizQuestion.setQuestionVersion(
-                latestVersion);
+                quizQuestion.setQuestionVersion(
+                                latestVersion);
 
-        quizQuestion.setDisplayOrder(
-                request.getDisplayOrder());
+                quizQuestion.setDisplayOrder(
+                                request.getDisplayOrder());
 
-        return quizQuestion;
-    }
+                return quizQuestion;
+        }
 
-    private QuizResponse buildQuizResponse(
-            Quiz quiz,
-            List<QuizQuestion> quizQuestions) {
+        private QuizResponse buildQuizResponse(
+                        Quiz quiz,
+                        List<QuizQuestion> quizQuestions) {
 
-        return QuizResponse.builder()
+                return QuizResponse.builder()
 
-                .quizUuid(quiz.getUuid())
+                                .quizUuid(quiz.getUuid())
 
-                .title(quiz.getTitle())
+                                .title(quiz.getTitle())
 
-                .questions(
-                        quizQuestions.stream()
-                                .map(this::buildQuestionResponse)
-                                .toList())
+                                .questions(
+                                                quizQuestions.stream()
+                                                                .map(this::buildQuestionResponse)
+                                                                .toList())
 
-                .build();
-    }
+                                .build();
+        }
 
-    private QuizQuestionResponse buildQuestionResponse(
-            QuizQuestion quizQuestion) {
+        private QuizQuestionResponse buildQuestionResponse(
+                        QuizQuestion quizQuestion) {
 
-        QuestionVersion version = quizQuestion.getQuestionVersion();
+                QuestionVersion version = quizQuestion.getQuestionVersion();
 
-        return QuizQuestionResponse.builder()
+                return QuizQuestionResponse.builder()
 
-                .questionUuid(
-                        version.getQuestion()
-                                .getUuid())
+                                .questionUuid(
+                                                version.getQuestion()
+                                                                .getUuid())
 
-                .questionVersionUuid(
-                        version.getUuid())
+                                .questionVersionUuid(
+                                                version.getUuid())
 
-                .versionNumber(
-                        version.getVersionNumber())
+                                .versionNumber(
+                                                version.getVersionNumber())
 
-                .questionText(
-                        version.getQuestionText())
+                                .questionText(
+                                                version.getQuestionText())
 
-                .displayOrder(
-                        quizQuestion.getDisplayOrder())
+                                .displayOrder(
+                                                quizQuestion.getDisplayOrder())
 
-                .build();
-    }
+                                .build();
+        }
+
+        @Override
+        public List<QuizResponse> getAllQuizzes() {
+
+                List<Quiz> quizzes = quizDao.getAllQuizzes();
+
+                return quizzes.stream()
+                                .map(this::buildQuizResponse)
+                                .toList();
+        }
+
+        @Override
+        public QuizResponse getQuizByUuid(
+                        UUID quizUuid) {
+
+                Quiz quiz = quizDao.getQuizByUuid(
+                                quizUuid);
+
+                return buildQuizResponse(quiz);
+        }
+
+        private QuizResponse buildQuizResponse(
+                        Quiz quiz) {
+
+                List<QuizQuestion> quizQuestions = quizDao.getQuizQuestions(quiz);
+
+                return QuizResponse.builder()
+
+                                .quizUuid(quiz.getUuid())
+
+                                .title(quiz.getTitle())
+
+                                .questions(
+                                                quizQuestions.stream()
+                                                                .map(this::buildQuestionResponse)
+                                                                .toList())
+
+                                .build();
+        }
 }

@@ -24,62 +24,83 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class QuizDaoImpl implements QuizDao {
 
-    private final UserRepository userRepository;
+        private final UserRepository userRepository;
 
-    private final QuestionRepository questionRepository;
+        private final QuestionRepository questionRepository;
 
-    private final QuestionVersionRepository
-            questionVersionRepository;
+        private final QuestionVersionRepository questionVersionRepository;
 
-    private final QuizRepository quizRepository;
+        private final QuizRepository quizRepository;
 
-    private final QuizQuestionRepository
-            quizQuestionRepository;
+        private final QuizQuestionRepository quizQuestionRepository;
 
-    @Override
-    public User getUserByUuid(UUID userUuid) {
+        @Override
+        public User getUserByUuid(UUID userUuid) {
 
-        return userRepository.findByUuid(userUuid)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "User not found"));
-    }
+                return userRepository.findByUuid(userUuid)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "User not found"));
+        }
 
-    @Override
-    public Question getQuestionByUuid(UUID questionUuid) {
+        @Override
+        public Question getQuestionByUuid(UUID questionUuid) {
 
-        return questionRepository.findByUuid(
-                questionUuid)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Question not found"));
-    }
+                return questionRepository.findByUuid(
+                                questionUuid)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Question not found"));
+        }
 
-    @Override
-    public QuestionVersion getLatestQuestionVersion(
-            Question question) {
+        @Override
+        public QuestionVersion getLatestQuestionVersion(
+                        Question question) {
 
-        return questionVersionRepository
-                .findTopByQuestionOrderByVersionNumberDesc(
-                        question)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Question version not found"));
-    }
+                return questionVersionRepository
+                                .findTopByQuestionOrderByVersionNumberDesc(
+                                                question)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Question version not found"));
+        }
 
-    @Override
-    @Transactional
-    public Quiz saveQuiz(Quiz quiz) {
+        @Override
+        @Transactional
+        public Quiz saveQuiz(Quiz quiz) {
 
-        return quizRepository.save(quiz);
-    }
+                return quizRepository.save(quiz);
+        }
 
-    @Override
-    @Transactional
-    public List<QuizQuestion> saveQuizQuestions(
-            List<QuizQuestion> quizQuestions) {
+        @Override
+        @Transactional
+        public List<QuizQuestion> saveQuizQuestions(
+                        List<QuizQuestion> quizQuestions) {
 
-        return quizQuestionRepository
-                .saveAll(quizQuestions);
-    }
+                return quizQuestionRepository
+                                .saveAll(quizQuestions);
+        }
+
+        @Override
+        public List<Quiz> getAllQuizzes() {
+
+                return quizRepository.findAll()
+                                .stream()
+                                .filter(Quiz::getIsActive)
+                                .toList();
+        }
+
+        @Override
+        public Quiz getQuizByUuid(UUID quizUuid) {
+
+                return quizRepository.findByUuid(quizUuid)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Quiz not found"));
+        }
+
+        @Override
+        public List<QuizQuestion> getQuizQuestions(
+                        Quiz quiz) {
+
+                return quizQuestionRepository
+                                .findByQuizOrderByDisplayOrder(
+                                                quiz);
+        }
 }

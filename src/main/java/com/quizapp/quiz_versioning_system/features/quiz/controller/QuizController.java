@@ -1,5 +1,6 @@
 package com.quizapp.quiz_versioning_system.features.quiz.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -20,31 +21,57 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class QuizController {
 
-    private final QuizService quizService;
+        private final QuizService quizService;
 
-    private final SecurityUtil securityUtil;
+        private final SecurityUtil securityUtil;
 
-    @PreAuthorize("hasAuthority('QUIZ_CREATE')")
-    @PostMapping
-    public ResponseEntity<ApiResponse<QuizResponse>>
-    createQuiz(
-            @Valid @RequestBody
-            CreateQuizRequest request) {
+        @PreAuthorize("hasAuthority('QUIZ_CREATE')")
+        @PostMapping
+        public ResponseEntity<ApiResponse<QuizResponse>> createQuiz(
+                        @Valid @RequestBody CreateQuizRequest request) {
 
-        UUID userUuid =
-                securityUtil.getCurrentUserUuid();
+                UUID userUuid = securityUtil.getCurrentUserUuid();
 
-        QuizResponse response =
-                quizService.createQuiz(
-                        request,
-                        userUuid);
+                QuizResponse response = quizService.createQuiz(
+                                request,
+                                userUuid);
 
-        return ResponseEntity.ok(
-                ApiResponse.<QuizResponse>builder()
-                        .success(true)
-                        .message(
-                                "Quiz created successfully")
-                        .data(response)
-                        .build());
-    }
+                return ResponseEntity.ok(
+                                ApiResponse.<QuizResponse>builder()
+                                                .success(true)
+                                                .message(
+                                                                "Quiz created successfully")
+                                                .data(response)
+                                                .build());
+        }
+
+        @PreAuthorize("hasAuthority('QUIZ_ATTEMPT')")
+        @GetMapping
+        public ResponseEntity<ApiResponse<List<QuizResponse>>> getAllQuizzes() {
+
+                List<QuizResponse> response = quizService.getAllQuizzes();
+
+                return ResponseEntity.ok(
+                                ApiResponse.<List<QuizResponse>>builder()
+                                                .success(true)
+                                                .message("Quizzes fetched successfully")
+                                                .data(response)
+                                                .build());
+        }
+
+        @PreAuthorize("hasAuthority('QUIZ_ATTEMPT')")
+        @GetMapping("/{quizUuid}")
+        public ResponseEntity<ApiResponse<QuizResponse>> getQuizByUuid(
+                        @PathVariable UUID quizUuid) {
+
+                QuizResponse response = quizService.getQuizByUuid(
+                                quizUuid);
+
+                return ResponseEntity.ok(
+                                ApiResponse.<QuizResponse>builder()
+                                                .success(true)
+                                                .message("Quiz fetched successfully")
+                                                .data(response)
+                                                .build());
+        }
 }
