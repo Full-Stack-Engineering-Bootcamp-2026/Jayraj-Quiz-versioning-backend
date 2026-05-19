@@ -24,7 +24,7 @@ public class AttemptAnswerResponse {
 
     private QuestionType questionType;
 
-    private List<String> options;
-
+    List<QuestionOptionResponse> options;
+    
     private String submittedAnswer;
 }

@@ -5,8 +5,10 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.quizapp.quiz_versioning_system.features.question.dto.QuestionOptionResponse;
 import com.quizapp.quiz_versioning_system.features.question.entity.Question;
 import com.quizapp.quiz_versioning_system.features.question.entity.QuestionVersion;
+import com.quizapp.quiz_versioning_system.features.question.repository.QuestionOptionRepository;
 import com.quizapp.quiz_versioning_system.features.quiz.dao.QuizDao;
 import com.quizapp.quiz_versioning_system.features.quiz.dto.CreateQuizRequest;
 import com.quizapp.quiz_versioning_system.features.quiz.dto.QuizQuestionRequest;
@@ -23,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 public class QuizServiceImpl implements QuizService {
 
         private final QuizDao quizDao;
+
+        private final QuestionOptionRepository questionOptionRepository;
 
         @Override
         public QuizResponse createQuiz(
@@ -100,7 +104,23 @@ public class QuizServiceImpl implements QuizService {
 
                 QuestionVersion version = quizQuestion.getQuestionVersion();
 
+                List<QuestionOptionResponse> options = questionOptionRepository
+                                .findByQuestionVersionOrderByDisplayOrder(
+                                                version)
+                                .stream()
+                                .map(option -> QuestionOptionResponse
+                                                .builder()
+                                                .optionText(
+                                                                option.getOptionText())
+                                                .displayOrder(
+                                                                option.getDisplayOrder())
+                                                .build())
+                                .toList();
+
                 return QuizQuestionResponse.builder()
+
+                                .quizQuestionUuid(
+                                                quizQuestion.getUuid())
 
                                 .questionUuid(
                                                 version.getQuestion()
@@ -114,6 +134,11 @@ public class QuizServiceImpl implements QuizService {
 
                                 .questionText(
                                                 version.getQuestionText())
+
+                                .questionType(
+                                                version.getQuestionType())
+
+                                .options(options)
 
                                 .displayOrder(
                                                 quizQuestion.getDisplayOrder())

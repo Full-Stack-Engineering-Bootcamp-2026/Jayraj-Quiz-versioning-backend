@@ -12,6 +12,7 @@ import com.quizapp.quiz_versioning_system.features.attempt.dto.AttemptAnswerRequ
 import com.quizapp.quiz_versioning_system.features.attempt.dto.AttemptAnswerResponse;
 import com.quizapp.quiz_versioning_system.features.attempt.dto.AttemptDetailsResponse;
 import com.quizapp.quiz_versioning_system.features.attempt.dto.AttemptSummaryResponse;
+import com.quizapp.quiz_versioning_system.features.attempt.dto.QuestionOptionResponse;
 import com.quizapp.quiz_versioning_system.features.attempt.dto.SubmitAttemptRequest;
 import com.quizapp.quiz_versioning_system.features.attempt.entity.AttemptAnswer;
 import com.quizapp.quiz_versioning_system.features.attempt.entity.AttemptSession;
@@ -28,218 +29,224 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AttemptServiceImpl implements AttemptService {
 
-    private final AttemptDao attemptDao;
+        private final AttemptDao attemptDao;
 
-    private final QuestionOptionRepository questionOptionRepository;
+        private final QuestionOptionRepository questionOptionRepository;
 
-    @Override
-    public void submitAttempt(
-            SubmitAttemptRequest request,
-            UUID userUuid) {
+        @Override
+        public void submitAttempt(
+                        SubmitAttemptRequest request,
+                        UUID userUuid) {
 
-        User user = attemptDao.getUserByUuid(userUuid);
+                User user = attemptDao.getUserByUuid(userUuid);
 
-        Quiz quiz = attemptDao.getQuizByUuid(
-                request.getQuizUuid());
+                Quiz quiz = attemptDao.getQuizByUuid(
+                                request.getQuizUuid());
 
-        AttemptSession attemptSession = new AttemptSession();
+                AttemptSession attemptSession = new AttemptSession();
 
-        attemptSession.setQuiz(quiz);
+                attemptSession.setQuiz(quiz);
 
-        attemptSession.setUser(user);
+                attemptSession.setUser(user);
 
-        attemptSession.setIsSubmitted(true);
+                attemptSession.setIsSubmitted(true);
 
-        attemptSession.setSubmittedAt(
-                LocalDateTime.now());
+                attemptSession.setSubmittedAt(
+                                LocalDateTime.now());
 
-        AttemptSession savedAttempt = attemptDao.saveAttemptSession(
-                attemptSession);
+                AttemptSession savedAttempt = attemptDao.saveAttemptSession(
+                                attemptSession);
 
-        List<AttemptAnswer> answers = request.getAnswers()
-                .stream()
-                .map(answerRequest -> buildAttemptAnswer(
-                        answerRequest,
-                        savedAttempt))
-                .toList();
+                List<AttemptAnswer> answers = request.getAnswers()
+                                .stream()
+                                .map(answerRequest -> buildAttemptAnswer(
+                                                answerRequest,
+                                                savedAttempt))
+                                .toList();
 
-        attemptDao.saveAttemptAnswers(
-                answers);
-    }
-
-    @Override
-    public List<AttemptSummaryResponse> getMyAttempts(UUID userUuid) {
-
-        User user = attemptDao.getUserByUuid(userUuid);
-
-        List<AttemptSession> attempts = attemptDao.getAttemptsByUser(
-                user);
-
-        return attempts.stream()
-                .map(this::buildSummaryResponse)
-                .toList();
-    }
-
-    @Override
-    public AttemptDetailsResponse getAttemptByUuid(
-            UUID attemptUuid,
-            UUID userUuid) {
-
-        AttemptSession attempt = attemptDao.getAttemptByUuid(
-                attemptUuid);
-
-        validateAttemptOwnership(
-                attempt,
-                userUuid);
-
-        List<AttemptAnswer> answers = attemptDao.getAnswersByAttempt(
-                attempt);
-
-        return buildAttemptDetailsResponse(
-                attempt,
-                answers);
-    }
-
-    private AttemptAnswer buildAttemptAnswer(
-            AttemptAnswerRequest request,
-            AttemptSession attemptSession) {
-
-        QuizQuestion quizQuestion = attemptDao.getQuizQuestionByUuid(
-                request.getQuizQuestionUuid());
-
-        validateQuizQuestionBelongsToQuiz(
-                quizQuestion,
-                attemptSession.getQuiz());
-
-        AttemptAnswer answer = new AttemptAnswer();
-
-        answer.setAttemptSession(
-                attemptSession);
-
-        answer.setQuizQuestion(
-                quizQuestion);
-
-        answer.setAnswerText(
-                request.getAnswerText());
-
-        return answer;
-    }
-
-    private void validateQuizQuestionBelongsToQuiz(
-            QuizQuestion quizQuestion,
-            Quiz quiz) {
-
-        if (!quizQuestion.getQuiz()
-                .getId()
-                .equals(quiz.getId())) {
-
-            throw new BadRequestException(
-                    "Quiz question does not belong to quiz");
+                attemptDao.saveAttemptAnswers(
+                                answers);
         }
-    }
 
-    private void validateAttemptOwnership(
-            AttemptSession attempt,
-            UUID userUuid) {
+        @Override
+        public List<AttemptSummaryResponse> getMyAttempts(UUID userUuid) {
 
-        if (!attempt.getUser()
-                .getUuid()
-                .equals(userUuid)) {
+                User user = attemptDao.getUserByUuid(userUuid);
 
-            throw new BadRequestException(
-                    "You cannot access this attempt");
+                List<AttemptSession> attempts = attemptDao.getAttemptsByUser(
+                                user);
+
+                return attempts.stream()
+                                .map(this::buildSummaryResponse)
+                                .toList();
         }
-    }
 
-    private AttemptSummaryResponse buildSummaryResponse(
-            AttemptSession attempt) {
+        @Override
+        public AttemptDetailsResponse getAttemptByUuid(
+                        UUID attemptUuid,
+                        UUID userUuid) {
 
-        return AttemptSummaryResponse.builder()
+                AttemptSession attempt = attemptDao.getAttemptByUuid(
+                                attemptUuid);
 
-                .attemptUuid(
-                        attempt.getUuid())
+                validateAttemptOwnership(
+                                attempt,
+                                userUuid);
 
-                .quizUuid(
-                        attempt.getQuiz().getUuid())
+                List<AttemptAnswer> answers = attemptDao.getAnswersByAttempt(
+                                attempt);
 
-                .quizTitle(
-                        attempt.getQuiz().getTitle())
+                return buildAttemptDetailsResponse(
+                                attempt,
+                                answers);
+        }
 
-                .isSubmitted(
-                        attempt.getIsSubmitted())
+        private AttemptAnswer buildAttemptAnswer(
+                        AttemptAnswerRequest request,
+                        AttemptSession attemptSession) {
 
-                .submittedAt(
-                        attempt.getSubmittedAt())
+                QuizQuestion quizQuestion = attemptDao.getQuizQuestionByUuid(
+                                request.getQuizQuestionUuid());
 
-                .build();
-    }
+                validateQuizQuestionBelongsToQuiz(
+                                quizQuestion,
+                                attemptSession.getQuiz());
 
-    private AttemptDetailsResponse buildAttemptDetailsResponse(
-            AttemptSession attempt,
-            List<AttemptAnswer> answers) {
+                AttemptAnswer answer = new AttemptAnswer();
 
-        return AttemptDetailsResponse.builder()
+                answer.setAttemptSession(
+                                attemptSession);
 
-                .attemptUuid(
-                        attempt.getUuid())
+                answer.setQuizQuestion(
+                                quizQuestion);
 
-                .quizUuid(
-                        attempt.getQuiz().getUuid())
+                answer.setAnswerText(
+                                request.getAnswerText());
 
-                .quizTitle(
-                        attempt.getQuiz().getTitle())
+                return answer;
+        }
 
-                .submittedAt(
-                        attempt.getSubmittedAt())
+        private void validateQuizQuestionBelongsToQuiz(
+                        QuizQuestion quizQuestion,
+                        Quiz quiz) {
 
-                .answers(
-                        answers.stream()
-                                .map(this::buildAnswerResponse)
-                                .toList())
+                if (!quizQuestion.getQuiz()
+                                .getId()
+                                .equals(quiz.getId())) {
 
-                .build();
-    }
+                        throw new BadRequestException(
+                                        "Quiz question does not belong to quiz");
+                }
+        }
 
-    private AttemptAnswerResponse buildAnswerResponse(
-            AttemptAnswer answer) {
+        private void validateAttemptOwnership(
+                        AttemptSession attempt,
+                        UUID userUuid) {
 
-        QuizQuestion quizQuestion = answer.getQuizQuestion();
+                if (!attempt.getUser()
+                                .getUuid()
+                                .equals(userUuid)) {
 
-        QuestionVersion version = quizQuestion.getQuestionVersion();
+                        throw new BadRequestException(
+                                        "You cannot access this attempt");
+                }
+        }
 
-        List<String> options = questionOptionRepository
-                .findByQuestionVersionOrderByDisplayOrder(
-                        version)
-                .stream()
-                .map(QuestionOption::getOptionText)
-                .toList();
+        private AttemptSummaryResponse buildSummaryResponse(
+                        AttemptSession attempt) {
 
-        return AttemptAnswerResponse.builder()
+                return AttemptSummaryResponse.builder()
 
-                .quizQuestionUuid(
-                        quizQuestion.getUuid())
+                                .attemptUuid(
+                                                attempt.getUuid())
 
-                .questionUuid(
-                        version.getQuestion()
-                                .getUuid())
+                                .quizUuid(
+                                                attempt.getQuiz().getUuid())
 
-                .questionVersionUuid(
-                        version.getUuid())
+                                .quizTitle(
+                                                attempt.getQuiz().getTitle())
 
-                .versionNumber(
-                        version.getVersionNumber())
+                                .isSubmitted(
+                                                attempt.getIsSubmitted())
 
-                .questionText(
-                        version.getQuestionText())
+                                .submittedAt(
+                                                attempt.getSubmittedAt())
 
-                .questionType(
-                        version.getQuestionType())
+                                .build();
+        }
 
-                .options(options)
+        private AttemptDetailsResponse buildAttemptDetailsResponse(
+                        AttemptSession attempt,
+                        List<AttemptAnswer> answers) {
 
-                .submittedAnswer(
-                        answer.getAnswerText())
+                return AttemptDetailsResponse.builder()
 
-                .build();
-    }
+                                .attemptUuid(
+                                                attempt.getUuid())
+
+                                .quizUuid(
+                                                attempt.getQuiz().getUuid())
+
+                                .quizTitle(
+                                                attempt.getQuiz().getTitle())
+
+                                .submittedAt(
+                                                attempt.getSubmittedAt())
+
+                                .answers(
+                                                answers.stream()
+                                                                .map(this::buildAnswerResponse)
+                                                                .toList())
+
+                                .build();
+        }
+
+        private AttemptAnswerResponse buildAnswerResponse(
+                        AttemptAnswer answer) {
+
+                QuizQuestion quizQuestion = answer.getQuizQuestion();
+
+                QuestionVersion version = quizQuestion.getQuestionVersion();
+
+                List<QuestionOptionResponse> options = questionOptionRepository
+                                .findByQuestionVersionOrderByDisplayOrder(
+                                                version)
+                                .stream()
+                                .map(option -> QuestionOptionResponse
+                                                .builder()
+                                                .optionText(
+                                                                option.getOptionText())
+                                                .displayOrder(
+                                                                option.getDisplayOrder())
+                                                .build())
+                                .toList();
+
+                return AttemptAnswerResponse.builder()
+
+                                .quizQuestionUuid(
+                                                quizQuestion.getUuid())
+
+                                .questionUuid(
+                                                version.getQuestion()
+                                                                .getUuid())
+
+                                .questionVersionUuid(
+                                                version.getUuid())
+
+                                .versionNumber(
+                                                version.getVersionNumber())
+
+                                .questionText(
+                                                version.getQuestionText())
+
+                                .questionType(
+                                                version.getQuestionType())
+
+                                .options(options)
+
+                                .submittedAnswer(
+                                                answer.getAnswerText())
+
+                                .build();
+        }
 }
